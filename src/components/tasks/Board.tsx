@@ -23,6 +23,7 @@ export function Board() {
   const selectedDate = useDateStore((state) => state.selectedDate);
   const tasks = useTaskStore((state) => state.tasks);
   const fetchTasks = useTaskStore((state) => state.fetchTasks);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
 
   const [modal, setModal] = useState<ModalState>(null);
 
@@ -39,6 +40,11 @@ export function Board() {
           tasks={tasks.filter((task) => task.status === status)}
           onAddClick={() => setModal({ mode: 'add', status })}
           onEditTask={(task) => setModal({ mode: 'edit', task })}
+          onDeleteTask={(task) => {
+            deleteTask(task.id).catch(() => {
+              // rollback already applied inside the store
+            });
+          }}
         />
       ))}
 

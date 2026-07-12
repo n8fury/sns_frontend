@@ -9,9 +9,16 @@ interface ColumnProps {
   tasks: Task[];
   onAddClick: () => void;
   onEditTask: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
 }
 
-export function Column({ title, tasks, onAddClick, onEditTask }: ColumnProps) {
+export function Column({
+  title,
+  tasks,
+  onAddClick,
+  onEditTask,
+  onDeleteTask,
+}: ColumnProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3">
       <div className="flex items-center justify-between">
@@ -34,7 +41,12 @@ export function Column({ title, tasks, onAddClick, onEditTask }: ColumnProps) {
           </p>
         ) : (
           tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onEdit={onEditTask} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
+            />
           ))
         )}
       </div>

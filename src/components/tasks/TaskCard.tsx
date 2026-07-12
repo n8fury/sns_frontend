@@ -20,9 +20,16 @@ const PRIORITY_CLASSES: Record<Priority, string> = {
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
-export function TaskCard({ task, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+  function handleDelete() {
+    if (window.confirm(`Delete "${task.title}"?`)) {
+      onDelete(task);
+    }
+  }
+
   return (
     <Card size="sm" className="cursor-default">
       <CardContent className="flex flex-col gap-2">
@@ -45,6 +52,9 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(task)}>
                   Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
