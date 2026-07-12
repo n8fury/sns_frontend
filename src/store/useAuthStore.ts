@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { api, setAuthToken } from '@/lib/api';
+import { api, setAuthToken, setOnUnauthorized } from '@/lib/api';
 import type { LoginResponse, User } from '@/lib/types';
 
-// Mirrored to a cookie (in addition to localStorage) so middleware.ts can
+// Mirrored to a cookie (in addition to localStorage) so proxy.ts can
 // read the auth state server-side for route protection.
 export const TOKEN_COOKIE = 'sns_token';
 
@@ -64,3 +64,14 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+// Any 401 means the token is dead server-side (expired/deleted) — clear
+// local state immediately without waiting on a logout round-trip.
+setOnUnauthorized(() => {
+  setAuthToken(null);
+  writeTokenCookie(null);
+  useAuthStore.setState({ token: null, user: null });
+  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+});
