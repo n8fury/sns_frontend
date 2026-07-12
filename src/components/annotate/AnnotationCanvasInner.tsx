@@ -1,9 +1,28 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Image as KonvaImage, Layer, Stage } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
+import {
+  Circle,
+  Image as KonvaImage,
+  Layer,
+  Line,
+  Stage,
+} from 'react-konva';
 
 import { useAnnotationStore } from '@/store/useAnnotationStore';
+import type { PolygonLabel } from '@/lib/types';
+
+// Replaced by ClassSelector's bound value in Task 4.6.
+const DEFAULT_LABEL: PolygonLabel = 'tumor';
+
+const CLOSE_HIT_RADIUS = 10;
+
+export const LABEL_COLORS: Record<PolygonLabel, string> = {
+  tumor: '#ef4444',
+  lesion: '#f59e0b',
+  other: '#3b82f6',
+};
 
 function useHtmlImage(src: string | undefined): HTMLImageElement | null {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -33,6 +52,14 @@ export default function AnnotationCanvasInner() {
   const activeImageId = useAnnotationStore((state) => state.activeImageId);
   const activeImage = images.find((image) => image.id === activeImageId);
 
+  const drawing = useAnnotationStore((state) => state.drawing);
+  const startDrawing = useAnnotationStore((state) => state.startDrawing);
+  const addDrawingPoint = useAnnotationStore(
+    (state) => state.addDrawingPoint,
+  );
+  const closeDrawing = useAnnotationStore((state) => state.closeDrawing);
+  const cancelDrawing = useAnnotationStore((state) => state.cancelDrawing);
+
   const htmlImage = useHtmlImage(activeImage?.file);
 
   useEffect(() => {
@@ -45,6 +72,16 @@ export default function AnnotationCanvasInner() {
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        cancelDrawing();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [cancelDrawing]);
 
   // Fit the image inside the container while preserving aspect ratio;
   // scale/offset here is also what Task 4.5's coordinate conversion uses.
@@ -63,10 +100,39 @@ export default function AnnotationCanvasInner() {
     offsetY = (size.height - drawHeight) / 2;
   }
 
+  function handleStageClick(event: KonvaEventObject<MouseEvent>) {
+    if (!htmlImage) return;
+    const pointer = event.target.getStage()?.getPointerPosition();
+    if (!pointer) return;
+    const point: [number, number] = [pointer.x, pointer.y];
+
+    if (!drawing) {
+      startDrawing(point, DEFAULT_LABEL);
+      return;
+    }
+    if (drawing.closed) return;
+
+    if (drawing.points.length >= 3) {
+      const [firstX, firstY] = drawing.points[0];
+      const distance = Math.hypot(point[0] - firstX, point[1] - firstY);
+      if (distance <= CLOSE_HIT_RADIUS) {
+        closeDrawing();
+        return;
+      }
+    }
+    addDrawingPoint(point);
+  }
+
+  const fillColor = drawing ? LABEL_COLORS[drawing.label] : undefined;
+
   return (
     <div ref={containerRef} className="h-full min-h-[400px] w-full">
       {size.width > 0 && size.height > 0 && (
-        <Stage width={size.width} height={size.height}>
+        <Stage
+          width={size.width}
+          height={size.height}
+          onClick={handleStageClick}
+        >
           <Layer>
             {htmlImage && (
               <KonvaImage
@@ -76,6 +142,20 @@ export default function AnnotationCanvasInner() {
                 width={drawWidth}
                 height={drawHeight}
               />
+            )}
+            {drawing && (
+              <>
+                <Line
+                  points={drawing.points.flat()}
+                  closed={drawing.closed}
+                  stroke={fillColor}
+                  strokeWidth={2}
+                  fill={drawing.closed ? `${fillColor}66` : undefined}
+                />
+                {drawing.points.map(([x, y], index) => (
+                  <Circle key={index} x={x} y={y} radius={4} fill={fillColor} />
+                ))}
+              </>
             )}
           </Layer>
         </Stage>

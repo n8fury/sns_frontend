@@ -6,6 +6,7 @@ import type { AnnotationImage, Polygon, PolygonLabel } from '@/lib/types';
 interface DrawingState {
   points: [number, number][];
   label: PolygonLabel;
+  closed: boolean;
 }
 
 interface AnnotationState {
@@ -21,6 +22,11 @@ interface AnnotationState {
   uploadImage: (file: File) => Promise<void>;
   deleteImage: (id: number) => Promise<void>;
   setActiveImageId: (id: number | null) => void;
+
+  startDrawing: (point: [number, number], label: PolygonLabel) => void;
+  addDrawingPoint: (point: [number, number]) => void;
+  closeDrawing: () => void;
+  cancelDrawing: () => void;
 }
 
 export const useAnnotationStore = create<AnnotationState>((set, get) => ({
@@ -86,4 +92,21 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   },
 
   setActiveImageId: (id) => set({ activeImageId: id }),
+
+  startDrawing: (point, label) =>
+    set({ drawing: { points: [point], label, closed: false } }),
+
+  addDrawingPoint: (point) =>
+    set((state) =>
+      state.drawing
+        ? { drawing: { ...state.drawing, points: [...state.drawing.points, point] } }
+        : {},
+    ),
+
+  closeDrawing: () =>
+    set((state) =>
+      state.drawing ? { drawing: { ...state.drawing, closed: true } } : {},
+    ),
+
+  cancelDrawing: () => set({ drawing: null }),
 }));
