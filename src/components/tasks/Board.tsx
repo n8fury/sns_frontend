@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Column } from '@/components/tasks/Column';
-import type { TaskStatus } from '@/lib/types';
+import { TaskModal } from '@/components/tasks/TaskModal';
+import type { Task, TaskStatus } from '@/lib/types';
 import { useDateStore } from '@/store/useDateStore';
 import { useTaskStore } from '@/store/useTaskStore';
 
@@ -13,10 +14,17 @@ const COLUMNS: { status: TaskStatus; title: string }[] = [
   { status: 'done', title: 'Done' },
 ];
 
+type ModalState =
+  | { mode: 'add'; status: TaskStatus }
+  | { mode: 'edit'; task: Task }
+  | null;
+
 export function Board() {
   const selectedDate = useDateStore((state) => state.selectedDate);
   const tasks = useTaskStore((state) => state.tasks);
   const fetchTasks = useTaskStore((state) => state.fetchTasks);
+
+  const [modal, setModal] = useState<ModalState>(null);
 
   useEffect(() => {
     fetchTasks(selectedDate);
@@ -29,8 +37,18 @@ export function Board() {
           key={status}
           title={title}
           tasks={tasks.filter((task) => task.status === status)}
+          onAddClick={() => setModal({ mode: 'add', status })}
+          onEditTask={(task) => setModal({ mode: 'edit', task })}
         />
       ))}
+
+      <TaskModal
+        open={modal !== null}
+        onOpenChange={(open) => !open && setModal(null)}
+        mode={modal?.mode ?? 'add'}
+        status={modal?.mode === 'add' ? modal.status : undefined}
+        task={modal?.mode === 'edit' ? modal.task : undefined}
+      />
     </div>
   );
 }
