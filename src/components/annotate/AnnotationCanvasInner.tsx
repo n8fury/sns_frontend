@@ -11,6 +11,7 @@ import {
 } from 'react-konva';
 
 import { useAnnotationStore } from '@/store/useAnnotationStore';
+import { imageToScreen, screenToImage } from '@/lib/imageCoords';
 import type { PolygonLabel } from '@/lib/types';
 
 // Replaced by ClassSelector's bound value in Task 4.6.
@@ -51,6 +52,9 @@ export default function AnnotationCanvasInner() {
   const images = useAnnotationStore((state) => state.images);
   const activeImageId = useAnnotationStore((state) => state.activeImageId);
   const activeImage = images.find((image) => image.id === activeImageId);
+  const activePolygons = useAnnotationStore((state) =>
+    state.activeImageId ? (state.polygons[state.activeImageId] ?? []) : [],
+  );
 
   const drawing = useAnnotationStore((state) => state.drawing);
   const startDrawing = useAnnotationStore((state) => state.startDrawing);
@@ -83,14 +87,16 @@ export default function AnnotationCanvasInner() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cancelDrawing]);
 
-  // Fit the image inside the container while preserving aspect ratio;
-  // scale/offset here is also what Task 4.5's coordinate conversion uses.
+  // Fit the image inside the container while preserving aspect ratio. This
+  // scale/offset is recomputed from current `size` on every render, so a
+  // resize automatically re-maps image-space points to the right place.
+  let scale = 0;
   let drawWidth = 0;
   let drawHeight = 0;
   let offsetX = 0;
   let offsetY = 0;
   if (htmlImage && size.width > 0 && size.height > 0) {
-    const scale = Math.min(
+    scale = Math.min(
       size.width / htmlImage.width,
       size.height / htmlImage.height,
     );
@@ -99,31 +105,39 @@ export default function AnnotationCanvasInner() {
     offsetX = (size.width - drawWidth) / 2;
     offsetY = (size.height - drawHeight) / 2;
   }
+  const transform = { scale, offsetX, offsetY };
 
   function handleStageClick(event: KonvaEventObject<MouseEvent>) {
-    if (!htmlImage) return;
+    if (!htmlImage || scale === 0) return;
     const pointer = event.target.getStage()?.getPointerPosition();
     if (!pointer) return;
-    const point: [number, number] = [pointer.x, pointer.y];
+    const screenPoint: [number, number] = [pointer.x, pointer.y];
 
     if (!drawing) {
-      startDrawing(point, DEFAULT_LABEL);
+      startDrawing(screenToImage(screenPoint, transform), DEFAULT_LABEL);
       return;
     }
     if (drawing.closed) return;
 
     if (drawing.points.length >= 3) {
-      const [firstX, firstY] = drawing.points[0];
-      const distance = Math.hypot(point[0] - firstX, point[1] - firstY);
+      const firstScreen = imageToScreen(drawing.points[0], transform);
+      const distance = Math.hypot(
+        screenPoint[0] - firstScreen[0],
+        screenPoint[1] - firstScreen[1],
+      );
       if (distance <= CLOSE_HIT_RADIUS) {
         closeDrawing();
         return;
       }
     }
-    addDrawingPoint(point);
+    addDrawingPoint(screenToImage(screenPoint, transform));
   }
 
-  const fillColor = drawing ? LABEL_COLORS[drawing.label] : undefined;
+  const canRenderShapes = htmlImage && scale > 0;
+  const drawingScreenPoints = drawing
+    ? drawing.points.map((point) => imageToScreen(point, transform))
+    : [];
+  const drawingColor = drawing ? LABEL_COLORS[drawing.label] : undefined;
 
   return (
     <div ref={containerRef} className="h-full min-h-[400px] w-full">
@@ -143,17 +157,41 @@ export default function AnnotationCanvasInner() {
                 height={drawHeight}
               />
             )}
-            {drawing && (
+
+            {canRenderShapes &&
+              activePolygons.map((polygon) => {
+                const screenPoints = polygon.points.map((point) =>
+                  imageToScreen(point, transform),
+                );
+                return (
+                  <Line
+                    key={polygon.id}
+                    points={screenPoints.flat()}
+                    closed
+                    stroke={LABEL_COLORS[polygon.label]}
+                    strokeWidth={2}
+                    fill={`${LABEL_COLORS[polygon.label]}66`}
+                  />
+                );
+              })}
+
+            {canRenderShapes && drawing && (
               <>
                 <Line
-                  points={drawing.points.flat()}
+                  points={drawingScreenPoints.flat()}
                   closed={drawing.closed}
-                  stroke={fillColor}
+                  stroke={drawingColor}
                   strokeWidth={2}
-                  fill={drawing.closed ? `${fillColor}66` : undefined}
+                  fill={drawing.closed ? `${drawingColor}66` : undefined}
                 />
-                {drawing.points.map(([x, y], index) => (
-                  <Circle key={index} x={x} y={y} radius={4} fill={fillColor} />
+                {drawingScreenPoints.map(([x, y], index) => (
+                  <Circle
+                    key={index}
+                    x={x}
+                    y={y}
+                    radius={4}
+                    fill={drawingColor}
+                  />
                 ))}
               </>
             )}
