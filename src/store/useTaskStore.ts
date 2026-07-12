@@ -30,9 +30,12 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const tasks = await api<Task[]>(`/api/tasks/?date=${date}`);
+      if (!Array.isArray(tasks)) {
+        throw new Error('Unexpected response shape');
+      }
       set({ tasks, loading: false });
     } catch {
-      set({ error: 'Failed to load tasks.', loading: false });
+      set({ error: 'Failed to load tasks.', loading: false, tasks: [] });
     }
   },
 

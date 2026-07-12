@@ -11,6 +11,8 @@ import {
 } from '@dnd-kit/core';
 import { useEffect, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Column } from '@/components/tasks/Column';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskModal } from '@/components/tasks/TaskModal';
@@ -32,6 +34,8 @@ type ModalState =
 export function Board() {
   const selectedDate = useDateStore((state) => state.selectedDate);
   const tasks = useTaskStore((state) => state.tasks);
+  const loading = useTaskStore((state) => state.loading);
+  const error = useTaskStore((state) => state.error);
   const fetchTasks = useTaskStore((state) => state.fetchTasks);
   const updateTask = useTaskStore((state) => state.updateTask);
   const deleteTask = useTaskStore((state) => state.deleteTask);
@@ -67,6 +71,37 @@ export function Board() {
     } catch {
       setDragError('Failed to move task. Please try again.');
     }
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+        <Button variant="outline" onClick={() => fetchTasks(selectedDate)}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 gap-3 p-4">
+        {COLUMNS.map(({ status, title }) => (
+          <div
+            key={status}
+            aria-label={`Loading ${title}`}
+            className="flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3"
+          >
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
