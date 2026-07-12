@@ -9,6 +9,7 @@ import {
   Line,
   Stage,
 } from 'react-konva';
+import { toast } from 'sonner';
 
 import { useAnnotationStore } from '@/store/useAnnotationStore';
 import { imageToScreen, screenToImage } from '@/lib/imageCoords';
@@ -124,7 +125,13 @@ export default function AnnotationCanvasInner() {
         screenPoint[1] - firstScreen[1],
       );
       if (distance <= CLOSE_HIT_RADIUS) {
-        closeDrawing();
+        closeDrawing().then((polygon) => {
+          if (polygon) {
+            toast.success('Polygon saved');
+          } else {
+            toast.error('Failed to save polygon.');
+          }
+        });
         return;
       }
     }

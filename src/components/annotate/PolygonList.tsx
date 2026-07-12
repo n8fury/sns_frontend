@@ -1,6 +1,7 @@
 'use client';
 
 import { TrashIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -22,9 +23,9 @@ export function PolygonList() {
   function handleDelete(event: React.MouseEvent, id: number) {
     event.stopPropagation();
     if (window.confirm('Delete this polygon?')) {
-      deletePolygon(id).catch(() => {
-        // rollback already applied inside the store
-      });
+      deletePolygon(id)
+        .then(() => toast.success('Polygon deleted'))
+        .catch(() => toast.error('Failed to delete polygon.'));
     }
   }
 

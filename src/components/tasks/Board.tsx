@@ -10,6 +10,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,7 +43,6 @@ export function Board() {
 
   const [modal, setModal] = useState<ModalState>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [dragError, setDragError] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -53,7 +53,6 @@ export function Board() {
   }, [selectedDate, fetchTasks]);
 
   function handleDragStart(event: DragStartEvent) {
-    setDragError(null);
     setActiveTask((event.active.data.current?.task as Task) ?? null);
   }
 
@@ -69,7 +68,7 @@ export function Board() {
     try {
       await updateTask(task.id, { status: newStatus });
     } catch {
-      setDragError('Failed to move task. Please try again.');
+      toast.error('Failed to move task. Please try again.');
     }
   }
 
@@ -106,12 +105,6 @@ export function Board() {
 
   return (
     <div className="flex flex-1 flex-col gap-2 p-4">
-      {dragError && (
-        <p role="alert" className="text-sm text-destructive">
-          {dragError}
-        </p>
-      )}
-
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -127,9 +120,9 @@ export function Board() {
               onAddClick={() => setModal({ mode: 'add', status })}
               onEditTask={(task) => setModal({ mode: 'edit', task })}
               onDeleteTask={(task) => {
-                deleteTask(task.id).catch(() => {
-                  // rollback already applied inside the store
-                });
+                deleteTask(task.id)
+                  .then(() => toast.success('Task deleted'))
+                  .catch(() => toast.error('Failed to delete task.'));
               }}
             />
           ))}
@@ -137,12 +130,14 @@ export function Board() {
 
         <DragOverlay>
           {activeTask ? (
-            <TaskCard
-              task={activeTask}
-              onEdit={() => {}}
-              onDelete={() => {}}
-              dragDisabled
-            />
+            <div className="rotate-2 scale-105 shadow-xl">
+              <TaskCard
+                task={activeTask}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                dragDisabled
+              />
+            </div>
           ) : null}
         </DragOverlay>
       </DndContext>

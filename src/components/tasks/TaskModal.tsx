@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -100,6 +101,7 @@ export function TaskModal({
         });
       }
       onOpenChange(false);
+      toast.success(mode === 'add' ? 'Task created' : 'Task updated');
     } catch {
       setError('Failed to save task. Please try again.');
     } finally {

@@ -31,7 +31,7 @@ interface AnnotationState {
   setSelectedLabel: (label: PolygonLabel) => void;
   startDrawing: (point: [number, number], label: PolygonLabel) => void;
   addDrawingPoint: (point: [number, number]) => void;
-  closeDrawing: () => Promise<void>;
+  closeDrawing: () => Promise<Polygon | null>;
   cancelDrawing: () => void;
 }
 
@@ -139,7 +139,7 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
 
   closeDrawing: async () => {
     const { drawing, activeImageId } = get();
-    if (!drawing || activeImageId === null) return;
+    if (!drawing || activeImageId === null) return null;
 
     set({ drawing: { ...drawing, closed: true } });
 
@@ -159,9 +159,11 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
         },
         drawing: null,
       }));
+      return polygon;
     } catch {
       set({ error: 'Failed to save polygon.' });
       // leave the closed-but-unsaved shape visible; Escape discards it
+      return null;
     }
   },
 

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { UploadIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,17 +14,16 @@ export function ImageUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleFiles(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     setUploading(true);
-    setError(null);
     try {
       await uploadImage(file);
+      toast.success('Image uploaded');
     } catch {
-      setError('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -64,11 +64,6 @@ export function ImageUploader() {
         className="hidden"
         onChange={(event) => handleFiles(event.target.files)}
       />
-      {error && (
-        <p role="alert" className="text-destructive">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

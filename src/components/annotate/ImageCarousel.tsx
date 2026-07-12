@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { TrashIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,9 +24,9 @@ export function ImageCarousel() {
   function handleDelete(event: React.MouseEvent, id: number) {
     event.stopPropagation();
     if (window.confirm('Delete this image? Its polygons will be removed too.')) {
-      deleteImage(id).catch(() => {
-        // rollback already applied inside the store
-      });
+      deleteImage(id)
+        .then(() => toast.success('Image deleted'))
+        .catch(() => toast.error('Failed to delete image.'));
     }
   }
 
