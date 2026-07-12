@@ -83,7 +83,8 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
     try {
       await api(`/api/images/${id}/`, { method: 'DELETE' });
       set((state) => {
-        const { [id]: _removed, ...rest } = state.polygons;
+        const rest = { ...state.polygons };
+        delete rest[id];
         return { polygons: rest };
       });
       if (nextActiveId !== null && nextActiveId !== previousActiveId) {

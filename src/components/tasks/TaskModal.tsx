@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -58,22 +58,30 @@ export function TaskModal({
   const [tagsInput, setTagsInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
 
-  useEffect(() => {
-    if (!open) return;
-    setError(null);
-    if (mode === 'edit' && task) {
-      setTitle(task.title);
-      setPriority(task.priority);
-      setDueDate(task.due_date);
-      setTagsInput(task.tags.join(', '));
-    } else {
-      setTitle('');
-      setPriority('medium');
-      setDueDate(selectedDate);
-      setTagsInput('');
+  // Adjust state during render (React's documented pattern) rather than
+  // setState-in-effect: fires exactly on the closed->open transition, not
+  // on every render while open (the old effect's deps included mode/task/
+  // selectedDate, so it could wipe in-progress edits if those ever changed
+  // while the dialog was still open).
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setError(null);
+      if (mode === 'edit' && task) {
+        setTitle(task.title);
+        setPriority(task.priority);
+        setDueDate(task.due_date);
+        setTagsInput(task.tags.join(', '));
+      } else {
+        setTitle('');
+        setPriority('medium');
+        setDueDate(selectedDate);
+        setTagsInput('');
+      }
     }
-  }, [open, mode, task, selectedDate]);
+  }
 
   const isValid = title.trim().length > 0 && dueDate.trim().length > 0;
 

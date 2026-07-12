@@ -19,12 +19,18 @@ const CLOSE_HIT_RADIUS = 10;
 
 function useHtmlImage(src: string | undefined): HTMLImageElement | null {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
+
+  // Adjust state during render (React's documented pattern for resetting
+  // state when a prop changes) instead of setState-in-effect, so switching
+  // to a new/no image clears the stale one immediately, not one tick late.
+  if (src !== loadedSrc) {
+    setLoadedSrc(src);
+    setImage(null);
+  }
 
   useEffect(() => {
-    if (!src) {
-      setImage(null);
-      return;
-    }
+    if (!src) return;
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => setImage(img);
