@@ -14,6 +14,7 @@ interface AnnotationState {
   activeImageId: number | null;
   polygons: Record<number, Polygon[]>;
   drawing: DrawingState | null;
+  selectedLabel: PolygonLabel;
 
   loading: boolean;
   error: string | null;
@@ -22,10 +23,12 @@ interface AnnotationState {
   uploadImage: (file: File) => Promise<void>;
   deleteImage: (id: number) => Promise<void>;
   setActiveImageId: (id: number | null) => void;
+  fetchPolygonsForImage: (imageId: number) => Promise<void>;
 
+  setSelectedLabel: (label: PolygonLabel) => void;
   startDrawing: (point: [number, number], label: PolygonLabel) => void;
   addDrawingPoint: (point: [number, number]) => void;
-  closeDrawing: () => void;
+  closeDrawing: () => Promise<void>;
   cancelDrawing: () => void;
 }
 
@@ -34,6 +37,7 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   activeImageId: null,
   polygons: {},
   drawing: null,
+  selectedLabel: 'tumor',
 
   loading: false,
   error: null,
@@ -45,11 +49,8 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
       if (!Array.isArray(images)) {
         throw new Error('Unexpected response shape');
       }
-      set({
-        images,
-        loading: false,
-        activeImageId: get().activeImageId ?? images[0]?.id ?? null,
-      });
+      set({ images, loading: false });
+      get().setActiveImageId(get().activeImageId ?? images[0]?.id ?? null);
     } catch {
       set({ error: 'Failed to load images.', loading: false, images: [] });
     }
@@ -62,36 +63,60 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
       method: 'POST',
       body: formData,
     });
-    set((state) => ({
-      images: [...state.images, image],
-      activeImageId: state.activeImageId ?? image.id,
-    }));
+    set((state) => ({ images: [...state.images, image] }));
+    if (get().activeImageId === null) {
+      get().setActiveImageId(image.id);
+    }
   },
 
   deleteImage: async (id) => {
     const previousImages = get().images;
     const previousActiveId = get().activeImageId;
     const remaining = previousImages.filter((image) => image.id !== id);
-    set({
-      images: remaining,
-      activeImageId:
-        previousActiveId === id
-          ? (remaining[0]?.id ?? null)
-          : previousActiveId,
-    });
+    const nextActiveId =
+      previousActiveId === id ? (remaining[0]?.id ?? null) : previousActiveId;
+    set({ images: remaining, activeImageId: nextActiveId });
     try {
       await api(`/api/images/${id}/`, { method: 'DELETE' });
       set((state) => {
         const { [id]: _removed, ...rest } = state.polygons;
         return { polygons: rest };
       });
+      if (nextActiveId !== null && nextActiveId !== previousActiveId) {
+        get().fetchPolygonsForImage(nextActiveId);
+      }
     } catch (err) {
       set({ images: previousImages, activeImageId: previousActiveId });
       throw err;
     }
   },
 
-  setActiveImageId: (id) => set({ activeImageId: id }),
+  setActiveImageId: (id) => {
+    set({ activeImageId: id });
+    if (id !== null) {
+      get().fetchPolygonsForImage(id);
+    }
+  },
+
+  fetchPolygonsForImage: async (imageId) => {
+    try {
+      const polygons = await api<Polygon[]>(`/api/polygons/?image=${imageId}`);
+      if (!Array.isArray(polygons)) {
+        throw new Error('Unexpected response shape');
+      }
+      set((state) => ({
+        polygons: { ...state.polygons, [imageId]: polygons },
+      }));
+    } catch {
+      // non-fatal: leave whatever polygons (if any) are already cached
+    }
+  },
+
+  setSelectedLabel: (label) =>
+    set((state) => ({
+      selectedLabel: label,
+      drawing: state.drawing ? { ...state.drawing, label } : state.drawing,
+    })),
 
   startDrawing: (point, label) =>
     set({ drawing: { points: [point], label, closed: false } }),
@@ -99,14 +124,42 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   addDrawingPoint: (point) =>
     set((state) =>
       state.drawing
-        ? { drawing: { ...state.drawing, points: [...state.drawing.points, point] } }
+        ? {
+            drawing: {
+              ...state.drawing,
+              points: [...state.drawing.points, point],
+            },
+          }
         : {},
     ),
 
-  closeDrawing: () =>
-    set((state) =>
-      state.drawing ? { drawing: { ...state.drawing, closed: true } } : {},
-    ),
+  closeDrawing: async () => {
+    const { drawing, activeImageId } = get();
+    if (!drawing || activeImageId === null) return;
+
+    set({ drawing: { ...drawing, closed: true } });
+
+    try {
+      const polygon = await api<Polygon>('/api/polygons/', {
+        method: 'POST',
+        body: {
+          image: activeImageId,
+          label: drawing.label,
+          points: drawing.points,
+        },
+      });
+      set((state) => ({
+        polygons: {
+          ...state.polygons,
+          [activeImageId]: [...(state.polygons[activeImageId] ?? []), polygon],
+        },
+        drawing: null,
+      }));
+    } catch {
+      set({ error: 'Failed to save polygon.' });
+      // leave the closed-but-unsaved shape visible; Escape discards it
+    }
+  },
 
   cancelDrawing: () => set({ drawing: null }),
 }));

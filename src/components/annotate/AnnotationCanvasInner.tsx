@@ -12,18 +12,9 @@ import {
 
 import { useAnnotationStore } from '@/store/useAnnotationStore';
 import { imageToScreen, screenToImage } from '@/lib/imageCoords';
-import type { PolygonLabel } from '@/lib/types';
-
-// Replaced by ClassSelector's bound value in Task 4.6.
-const DEFAULT_LABEL: PolygonLabel = 'tumor';
+import { LABEL_COLORS } from '@/lib/labelColors';
 
 const CLOSE_HIT_RADIUS = 10;
-
-export const LABEL_COLORS: Record<PolygonLabel, string> = {
-  tumor: '#ef4444',
-  lesion: '#f59e0b',
-  other: '#3b82f6',
-};
 
 function useHtmlImage(src: string | undefined): HTMLImageElement | null {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -57,6 +48,7 @@ export default function AnnotationCanvasInner() {
   );
 
   const drawing = useAnnotationStore((state) => state.drawing);
+  const selectedLabel = useAnnotationStore((state) => state.selectedLabel);
   const startDrawing = useAnnotationStore((state) => state.startDrawing);
   const addDrawingPoint = useAnnotationStore(
     (state) => state.addDrawingPoint,
@@ -114,7 +106,7 @@ export default function AnnotationCanvasInner() {
     const screenPoint: [number, number] = [pointer.x, pointer.y];
 
     if (!drawing) {
-      startDrawing(screenToImage(screenPoint, transform), DEFAULT_LABEL);
+      startDrawing(screenToImage(screenPoint, transform), selectedLabel);
       return;
     }
     if (drawing.closed) return;
