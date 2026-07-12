@@ -54,7 +54,7 @@ export function PolygonList() {
           <button
             type="button"
             onClick={() => setSelectedPolygonId(polygon.id)}
-            className="flex-1 text-left"
+            className="flex-1 cursor-pointer text-left"
           >
             {polygon.label}{' '}
             <span className="text-muted-foreground">

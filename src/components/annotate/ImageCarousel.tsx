@@ -45,7 +45,7 @@ export function ImageCarousel() {
             type="button"
             onClick={() => setActiveImageId(image.id)}
             className={cn(
-              'block overflow-hidden rounded-md border-2 transition-colors',
+              'block cursor-pointer overflow-hidden rounded-md border-2 transition-colors',
               image.id === activeImageId
                 ? 'border-primary'
                 : 'border-transparent',
