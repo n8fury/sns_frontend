@@ -19,6 +19,7 @@ interface AnnotationState {
 
   fetchImages: () => Promise<void>;
   uploadImage: (file: File) => Promise<void>;
+  deleteImage: (id: number) => Promise<void>;
   setActiveImageId: (id: number | null) => void;
 }
 
@@ -59,6 +60,29 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
       images: [...state.images, image],
       activeImageId: state.activeImageId ?? image.id,
     }));
+  },
+
+  deleteImage: async (id) => {
+    const previousImages = get().images;
+    const previousActiveId = get().activeImageId;
+    const remaining = previousImages.filter((image) => image.id !== id);
+    set({
+      images: remaining,
+      activeImageId:
+        previousActiveId === id
+          ? (remaining[0]?.id ?? null)
+          : previousActiveId,
+    });
+    try {
+      await api(`/api/images/${id}/`, { method: 'DELETE' });
+      set((state) => {
+        const { [id]: _removed, ...rest } = state.polygons;
+        return { polygons: rest };
+      });
+    } catch (err) {
+      set({ images: previousImages, activeImageId: previousActiveId });
+      throw err;
+    }
   },
 
   setActiveImageId: (id) => set({ activeImageId: id }),
