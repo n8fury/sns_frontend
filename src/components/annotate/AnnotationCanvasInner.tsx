@@ -49,6 +49,12 @@ export default function AnnotationCanvasInner() {
 
   const drawing = useAnnotationStore((state) => state.drawing);
   const selectedLabel = useAnnotationStore((state) => state.selectedLabel);
+  const selectedPolygonId = useAnnotationStore(
+    (state) => state.selectedPolygonId,
+  );
+  const setSelectedPolygonId = useAnnotationStore(
+    (state) => state.setSelectedPolygonId,
+  );
   const startDrawing = useAnnotationStore((state) => state.startDrawing);
   const addDrawingPoint = useAnnotationStore(
     (state) => state.addDrawingPoint,
@@ -155,14 +161,19 @@ export default function AnnotationCanvasInner() {
                 const screenPoints = polygon.points.map((point) =>
                   imageToScreen(point, transform),
                 );
+                const isSelected = polygon.id === selectedPolygonId;
                 return (
                   <Line
                     key={polygon.id}
                     points={screenPoints.flat()}
                     closed
                     stroke={LABEL_COLORS[polygon.label]}
-                    strokeWidth={2}
-                    fill={`${LABEL_COLORS[polygon.label]}66`}
+                    strokeWidth={isSelected ? 4 : 2}
+                    fill={`${LABEL_COLORS[polygon.label]}${isSelected ? 'aa' : '66'}`}
+                    onClick={(event) => {
+                      event.cancelBubble = true;
+                      setSelectedPolygonId(polygon.id);
+                    }}
                   />
                 );
               })}

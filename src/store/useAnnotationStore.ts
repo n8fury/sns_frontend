@@ -15,6 +15,7 @@ interface AnnotationState {
   polygons: Record<number, Polygon[]>;
   drawing: DrawingState | null;
   selectedLabel: PolygonLabel;
+  selectedPolygonId: number | null;
 
   loading: boolean;
   error: string | null;
@@ -24,6 +25,8 @@ interface AnnotationState {
   deleteImage: (id: number) => Promise<void>;
   setActiveImageId: (id: number | null) => void;
   fetchPolygonsForImage: (imageId: number) => Promise<void>;
+  setSelectedPolygonId: (id: number | null) => void;
+  deletePolygon: (id: number) => Promise<void>;
 
   setSelectedLabel: (label: PolygonLabel) => void;
   startDrawing: (point: [number, number], label: PolygonLabel) => void;
@@ -38,6 +41,7 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   polygons: {},
   drawing: null,
   selectedLabel: 'tumor',
+  selectedPolygonId: null,
 
   loading: false,
   error: null,
@@ -92,7 +96,7 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   },
 
   setActiveImageId: (id) => {
-    set({ activeImageId: id });
+    set({ activeImageId: id, selectedPolygonId: null });
     if (id !== null) {
       get().fetchPolygonsForImage(id);
     }
@@ -162,4 +166,28 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
   },
 
   cancelDrawing: () => set({ drawing: null }),
+
+  setSelectedPolygonId: (id) => set({ selectedPolygonId: id }),
+
+  deletePolygon: async (id) => {
+    const { activeImageId, polygons, selectedPolygonId } = get();
+    if (activeImageId === null) return;
+    const previous = polygons[activeImageId] ?? [];
+    set({
+      polygons: {
+        ...polygons,
+        [activeImageId]: previous.filter((polygon) => polygon.id !== id),
+      },
+      selectedPolygonId: selectedPolygonId === id ? null : selectedPolygonId,
+    });
+    try {
+      await api(`/api/polygons/${id}/`, { method: 'DELETE' });
+    } catch (err) {
+      set((state) => ({
+        polygons: { ...state.polygons, [activeImageId]: previous },
+        selectedPolygonId,
+      }));
+      throw err;
+    }
+  },
 }));
