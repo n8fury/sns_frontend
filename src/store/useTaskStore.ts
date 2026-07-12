@@ -45,11 +45,24 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   updateTask: async (id, patch) => {
-    const updated = await api<Task>(`/api/tasks/${id}/`, {
-      method: 'PATCH',
-      body: patch,
+    const previous = get().tasks;
+    set({
+      tasks: previous.map((task) =>
+        task.id === id ? { ...task, ...patch } : task,
+      ),
     });
-    set({ tasks: get().tasks.map((task) => (task.id === id ? updated : task)) });
+    try {
+      const updated = await api<Task>(`/api/tasks/${id}/`, {
+        method: 'PATCH',
+        body: patch,
+      });
+      set({
+        tasks: get().tasks.map((task) => (task.id === id ? updated : task)),
+      });
+    } catch (err) {
+      set({ tasks: previous });
+      throw err;
+    }
   },
 
   deleteTask: async (id) => {

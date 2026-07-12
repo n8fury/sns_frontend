@@ -1,10 +1,15 @@
+'use client';
+
+import { useDroppable } from '@dnd-kit/core';
 import { PlusIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/tasks/TaskCard';
-import type { Task } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import type { Task, TaskStatus } from '@/lib/types';
 
 interface ColumnProps {
+  status: TaskStatus;
   title: string;
   tasks: Task[];
   onAddClick: () => void;
@@ -13,14 +18,23 @@ interface ColumnProps {
 }
 
 export function Column({
+  status,
   title,
   tasks,
   onAddClick,
   onEditTask,
   onDeleteTask,
 }: ColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3 transition-colors',
+        isOver && 'border-primary bg-primary/5',
+      )}
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">
           {title} <span className="text-muted-foreground">{tasks.length}</span>
