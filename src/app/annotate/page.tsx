@@ -1,3 +1,4 @@
+import { AnnotationCanvas } from '@/components/annotate/AnnotationCanvas';
 import { ImageCarousel } from '@/components/annotate/ImageCarousel';
 import { ImageUploader } from '@/components/annotate/ImageUploader';
 
@@ -7,6 +8,9 @@ export default function AnnotatePage() {
       <h1 className="text-lg font-semibold">Annotate</h1>
       <ImageUploader />
       <ImageCarousel />
+      <div className="flex-1">
+        <AnnotationCanvas />
+      </div>
     </div>
   );
 }
