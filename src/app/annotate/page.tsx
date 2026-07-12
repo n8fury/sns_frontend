@@ -12,11 +12,11 @@ export default function AnnotatePage() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <ImageUploader />
         <ImageCarousel />
-        <div className="flex flex-1 gap-4">
-          <div className="flex-1">
+        <div className="flex flex-1 flex-col gap-4 lg:flex-row">
+          <div className="min-h-[400px] flex-1">
             <AnnotationCanvas />
           </div>
-          <aside className="w-64 shrink-0 border-l pl-4">
+          <aside className="w-full shrink-0 border-t pt-4 lg:w-64 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-4">
             <PolygonList />
           </aside>
         </div>

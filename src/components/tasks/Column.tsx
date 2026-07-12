@@ -31,7 +31,7 @@ export function Column({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3 transition-colors',
+        'flex min-w-[260px] flex-1 shrink-0 flex-col gap-3 rounded-lg border bg-muted/30 p-3 transition-colors',
         isOver && 'border-primary bg-primary/5',
       )}
     >

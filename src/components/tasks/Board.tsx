@@ -87,12 +87,12 @@ export function Board() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 gap-3 p-4">
+      <div className="flex flex-1 gap-3 overflow-x-auto p-4">
         {COLUMNS.map(({ status, title }) => (
           <div
             key={status}
             aria-label={`Loading ${title}`}
-            className="flex min-w-0 flex-1 flex-col gap-3 rounded-lg border bg-muted/30 p-3"
+            className="flex min-w-[260px] flex-1 shrink-0 flex-col gap-3 rounded-lg border bg-muted/30 p-3"
           >
             <Skeleton className="h-5 w-20" />
             <Skeleton className="h-16 w-full" />
@@ -110,7 +110,7 @@ export function Board() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-3">
+        <div className="flex flex-1 gap-3 overflow-x-auto">
           {COLUMNS.map(({ status, title }) => (
             <Column
               key={status}
