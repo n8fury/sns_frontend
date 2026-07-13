@@ -45,7 +45,6 @@ function useHtmlImage(src: string | undefined): HTMLImageElement | null {
   useEffect(() => {
     if (!src) return;
     const img = new window.Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => setImage(img);
     img.src = src;
     return () => {

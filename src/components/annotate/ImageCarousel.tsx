@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+
 import { TrashIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { useAnnotationStore } from '@/store/useAnnotationStore';
 
@@ -17,13 +20,18 @@ export function ImageCarousel() {
   );
   const deleteImage = useAnnotationStore((state) => state.deleteImage);
 
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
   function handleDelete(event: React.MouseEvent, id: number) {
     event.stopPropagation();
-    if (window.confirm('Delete this image? Its polygons will be removed too.')) {
-      deleteImage(id)
-        .then(() => toast.success('Image deleted'))
-        .catch(() => toast.error('Failed to delete image.'));
-    }
+    setPendingDeleteId(id);
+  }
+
+  function confirmDelete() {
+    if (pendingDeleteId === null) return;
+    deleteImage(pendingDeleteId)
+      .then(() => toast.success('Image deleted'))
+      .catch(() => toast.error('Failed to delete image.'));
   }
 
   return (
@@ -59,6 +67,15 @@ export function ImageCarousel() {
           </Button>
         </div>
       ))}
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        title="Delete image"
+        description="Delete this image? Its polygons will be removed too."
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

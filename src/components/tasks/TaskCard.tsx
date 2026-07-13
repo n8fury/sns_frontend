@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useDraggable } from '@dnd-kit/core';
 import { MoreVerticalIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,11 +44,7 @@ export function TaskCard({
       disabled: dragDisabled,
     });
 
-  function handleDelete() {
-    if (window.confirm(`Delete "${task.title}"?`)) {
-      onDelete(task);
-    }
-  }
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div
@@ -83,7 +82,7 @@ export function TaskCard({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={handleDelete}
+                    onClick={() => setConfirmOpen(true)}
                   >
                     Delete
                   </DropdownMenuItem>
@@ -103,6 +102,13 @@ export function TaskCard({
           <p className="text-xs text-muted-foreground">{task.due_date}</p>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete task"
+        description={`Delete "${task.title}"? This can't be undone.`}
+        onConfirm={() => onDelete(task)}
+      />
     </div>
   );
 }
