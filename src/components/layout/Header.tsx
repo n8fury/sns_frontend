@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ImageIcon, ListTodoIcon, LogOutIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -54,6 +55,7 @@ export function Header() {
         <span className="hidden text-muted-foreground md:inline">
           {user.email}
         </span>
+        <ThemeToggle />
         <Button
           variant="outline"
           size="sm"

@@ -1,9 +1,13 @@
 'use client';
 
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { DatePickerCalendar } from '@/components/DatePickerCalendar';
 import {
   Popover,
   PopoverContent,
@@ -24,11 +28,12 @@ export function DateSelector() {
   });
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5 rounded-full border bg-background p-1">
       <Button
-        variant="outline"
-        size="icon"
+        variant="ghost"
+        size="icon-sm"
         aria-label="Previous day"
+        className="rounded-full"
         onClick={() => setSelectedDate(addDays(selectedDate, -1))}
       >
         <ChevronLeftIcon />
@@ -36,22 +41,37 @@ export function DateSelector() {
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline">{displayDate}</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 rounded-full px-3 font-medium"
+          >
+            <CalendarIcon className="size-4 text-muted-foreground" />
+            {displayDate}
+          </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            captionLayout="dropdown"
+          <DatePickerCalendar
             selected={fromIsoDate(selectedDate)}
-            onSelect={(date) => date && setSelectedDate(toIsoDate(date))}
+            onSelect={(date) => setSelectedDate(toIsoDate(date))}
           />
+          <div className="flex justify-center border-t p-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedDate(toIsoDate(new Date()))}
+            >
+              Jump to today
+            </Button>
+          </div>
         </PopoverContent>
       </Popover>
 
       <Button
-        variant="outline"
-        size="icon"
+        variant="ghost"
+        size="icon-sm"
         aria-label="Next day"
+        className="rounded-full"
         onClick={() => setSelectedDate(addDays(selectedDate, 1))}
       >
         <ChevronRightIcon />
