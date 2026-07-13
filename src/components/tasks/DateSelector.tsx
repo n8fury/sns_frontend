@@ -41,6 +41,7 @@ export function DateSelector() {
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
+            captionLayout="dropdown"
             selected={fromIsoDate(selectedDate)}
             onSelect={(date) => date && setSelectedDate(toIsoDate(date))}
           />
