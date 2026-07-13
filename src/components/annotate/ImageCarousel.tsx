@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { TrashIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -8,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnnotationStore } from '@/store/useAnnotationStore';
 
+// Only ever rendered once AnnotateWorkspace confirms images exist — the
+// initial fetch lives there so it always runs, even in the empty state.
 export function ImageCarousel() {
   const images = useAnnotationStore((state) => state.images);
   const activeImageId = useAnnotationStore((state) => state.activeImageId);
@@ -15,11 +16,6 @@ export function ImageCarousel() {
     (state) => state.setActiveImageId,
   );
   const deleteImage = useAnnotationStore((state) => state.deleteImage);
-  const fetchImages = useAnnotationStore((state) => state.fetchImages);
-
-  useEffect(() => {
-    fetchImages();
-  }, [fetchImages]);
 
   function handleDelete(event: React.MouseEvent, id: number) {
     event.stopPropagation();
@@ -28,14 +24,6 @@ export function ImageCarousel() {
         .then(() => toast.success('Image deleted'))
         .catch(() => toast.error('Failed to delete image.'));
     }
-  }
-
-  if (images.length === 0) {
-    return (
-      <p className="p-4 text-center text-sm text-muted-foreground">
-        No images uploaded yet.
-      </p>
-    );
   }
 
   return (
@@ -61,11 +49,11 @@ export function ImageCarousel() {
           </button>
           <Button
             type="button"
-            variant="destructive"
+            variant="ghost"
             size="icon-xs"
             aria-label="Delete image"
             onClick={(event) => handleDelete(event, image.id)}
-            className="absolute top-1 right-1 opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute top-1 right-1 bg-black/60 text-white opacity-0 shadow-md transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100"
           >
             <TrashIcon />
           </Button>

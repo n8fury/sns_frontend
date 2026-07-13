@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { LABEL_DISPLAY_NAMES } from '@/lib/labelNames';
 import type { PolygonLabel } from '@/lib/types';
 import { useAnnotationStore } from '@/store/useAnnotationStore';
 
@@ -29,7 +30,7 @@ export function ClassSelector() {
       <SelectContent>
         {LABELS.map((label) => (
           <SelectItem key={label} value={label}>
-            {label}
+            {LABEL_DISPLAY_NAMES[label]}
           </SelectItem>
         ))}
       </SelectContent>

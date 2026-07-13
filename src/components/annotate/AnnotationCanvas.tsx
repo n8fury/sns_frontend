@@ -2,8 +2,6 @@
 
 import dynamic from 'next/dynamic';
 
-import { ClassSelector } from '@/components/annotate/ClassSelector';
-
 // react-konva touches `window`/canvas APIs that don't exist during SSR,
 // so this must only ever mount on the client.
 const AnnotationCanvasInner = dynamic(
@@ -11,13 +9,27 @@ const AnnotationCanvasInner = dynamic(
   { ssr: false },
 );
 
-export function AnnotationCanvas() {
+interface AnnotationCanvasProps {
+  hideAnnotations?: boolean;
+  imageId?: number | null;
+  zoom?: number;
+  drawMode?: boolean;
+}
+
+export function AnnotationCanvas({
+  hideAnnotations,
+  imageId,
+  zoom,
+  drawMode,
+}: AnnotationCanvasProps) {
   return (
-    <div className="flex h-full flex-col gap-2">
-      <ClassSelector />
-      <div className="flex-1">
-        <AnnotationCanvasInner />
-      </div>
+    <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+      <AnnotationCanvasInner
+        hideAnnotations={hideAnnotations}
+        imageId={imageId}
+        zoom={zoom}
+        drawMode={drawMode}
+      />
     </div>
   );
 }

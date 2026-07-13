@@ -4,13 +4,19 @@ import { TrashIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { LABEL_DISPLAY_NAMES } from '@/lib/labelNames';
+import type { Polygon } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAnnotationStore } from '@/store/useAnnotationStore';
+
+const EMPTY_POLYGONS: Polygon[] = [];
 
 export function PolygonList() {
   const activeImageId = useAnnotationStore((state) => state.activeImageId);
   const polygons = useAnnotationStore((state) =>
-    state.activeImageId ? (state.polygons[state.activeImageId] ?? []) : [],
+    state.activeImageId
+      ? (state.polygons[state.activeImageId] ?? EMPTY_POLYGONS)
+      : EMPTY_POLYGONS,
   );
   const selectedPolygonId = useAnnotationStore(
     (state) => state.selectedPolygonId,
@@ -22,8 +28,9 @@ export function PolygonList() {
 
   function handleDelete(event: React.MouseEvent, id: number) {
     event.stopPropagation();
+    if (!activeImageId) return;
     if (window.confirm('Delete this polygon?')) {
-      deletePolygon(id)
+      deletePolygon(id, activeImageId)
         .then(() => toast.success('Polygon deleted'))
         .catch(() => toast.error('Failed to delete polygon.'));
     }
@@ -57,7 +64,7 @@ export function PolygonList() {
             onClick={() => setSelectedPolygonId(polygon.id)}
             className="flex-1 cursor-pointer text-left"
           >
-            {polygon.label}{' '}
+            {LABEL_DISPLAY_NAMES[polygon.label]}{' '}
             <span className="text-muted-foreground">
               ({polygon.points.length} pts)
             </span>
